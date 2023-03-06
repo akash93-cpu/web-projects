@@ -1,0 +1,189 @@
+import React, { useState, useEffect } from "react";
+import axiosInstance from "../../axios";
+import { useHistory } from "react-router-dom";
+
+import Avatar from '@material-ui/core/Avatar';
+import Button from '@material-ui/core/Button';
+import CssBaseline from '@material-ui/core/CssBaseline';
+import TextField from '@material-ui/core/TextField';
+import Grid from '@material-ui/core/Grid';
+import Typography from '@material-ui/core/Typography';
+import { makeStyles } from '@material-ui/core/styles';
+import Container from '@material-ui/core/Container';
+import jwtDecode from "jwt-decode";
+
+const useStyles = makeStyles((theme) => ({
+	paper: {
+		marginTop: theme.spacing(8),
+		display: 'flex',
+		flexDirection: 'column',
+		alignItems: 'center',
+	},
+	avatar: {
+		margin: theme.spacing(1),
+		backgroundColor: theme.palette.secondary.main,
+	},
+	form: {
+		width: '100%', // Fix IE 11 issue.
+		marginTop: theme.spacing(3),
+	},
+	submit: {
+		margin: theme.spacing(3, 0, 2),
+	},
+}));
+
+export default function Create() {
+    function slugify(string) {
+        const a = 'àáâäæãåāăąçćčđďèéêëēėęěğǵḧîïíīįìłḿñńǹňôöòóœøōõőṕŕřßśšşșťțûüùúūǘůűųẃẍÿýžźż·/_,:;';
+        const b = 'aaaaaaaaaacccddeeeeeeeegghiiiiiilmnnnnoooooooooprrsssssttuuuuuuuuuwxyyzzz------';
+        const p = new RegExp(a.split('').join('|'), 'g');
+
+        return string
+            .toString()
+            .toLowerCase()
+            .replace(/\s+/g, '-')
+            .replace(p, (c) => b.charAt(a.indexOf(c)))
+            .replace(/&/g, '-and-')
+            .replace(/[^\w\-]+/g, '')
+            .replace(/\-\-+/g, '-')
+
+            .replace(/^-+/, '') 
+            .replace(/-+$/, '');
+    }
+
+    const history = useHistory();
+    const initialFormData = Object.freeze({
+        title: '',
+        slug: '',
+        excerpt: '',
+        content: '',
+
+    });
+
+    const [formData, updateFormData] = useState(initialFormData);
+
+    const handleChange = (e) => {
+        if ([e.target.name] == 'title') {
+            updateFormData({
+                ...formData,
+                [e.target.name]: e.target.value.trim(),
+                ['slug']: slugify(e.target.value.trim()),
+            });
+        } else {
+            updateFormData({
+                ...formData,
+                [e.target.name]: e.target.value.trim(),
+
+            });
+
+        }
+    };  
+
+	const [c, d] = React.useState();
+	
+	useEffect(() => {
+		if(localStorage.getItem('access_token') === null || localStorage.getItem('access_token') === undefined) {
+			console.log("NO TOKEN HERE TO ALLOW USER TO CREATE POST!");
+		} else {
+			d(jwtDecode(localStorage.getItem('access_token')).user_id);
+		}
+	});
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        axiosInstance
+            .post(`admin/create/`, {
+                title: formData.title,
+                slug: formData.slug,
+                author: c,
+                excerpt: formData.excerpt,
+                content: formData.content,
+            })
+            .then((res) => {
+                history.push('/admin/');
+            });
+    };
+
+    const classes = useStyles();    
+
+    return (
+		<Container component="main" maxWidth="xs">
+			<CssBaseline />
+			<div className={classes.paper}>
+				<Avatar className={classes.avatar}></Avatar>
+				<Typography component="h1" variant="h5">
+					Create New Post
+				</Typography>
+				<form className={classes.form} noValidate>
+					<Grid container spacing={2}>
+						<Grid item xs={12}>
+							<TextField
+								variant="outlined"
+								required
+								fullWidth
+								id="title"
+								label="Post Title"
+								name="title"
+								autoComplete="title"
+								onChange={handleChange}
+							/>
+						</Grid>
+						<Grid item xs={12}>
+							<TextField
+								variant="outlined"
+								required
+								fullWidth
+								id="excerpt"
+								label="Post Excerpt"
+								name="excerpt"
+								autoComplete="excerpt"
+								onChange={handleChange}
+								multiline
+								rows={4}
+							/>
+						</Grid>
+						<Grid item xs={12}>
+							<TextField
+								variant="outlined"
+								required
+								fullWidth
+								id="slug"
+								label="slug"
+								name="slug"
+								autoComplete="slug"
+								value={formData.slug}
+								onChange={handleChange}
+							/>
+						</Grid>
+						<Grid item xs={12}>
+							<TextField
+								variant="outlined"
+								required
+								fullWidth
+								id="content"
+								label="content"
+								name="content"
+								autoComplete="content"
+								onChange={handleChange}
+								multiline
+								rows={4}
+							/>
+						</Grid>
+					</Grid>
+					<Button
+						type="submit"
+						fullWidth
+						variant="contained"
+						color="primary"
+						className={classes.submit}
+						onClick={handleSubmit}
+					>
+						Create Post
+					</Button>
+				</form>
+			</div>
+		</Container>
+	);
+
+}
+
